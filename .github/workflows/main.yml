@@ -1,0 +1,43 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+      
+    - uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    - run: npm ci
+      
+    - run: npm run build
+      
+    - uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        
+    - uses: android-actions/setup-android@v2
+      
+    - run: |
+        npm install -g @capacitor/cli @capacitor/core @capacitor/android
+        npx cap init "Gestor Iniciativas" "com.dnd.gestorinitiativas" --web-dir=dist
+        npx cap add android
+        
+    - run: |
+        cd android
+        chmod +x ./gradlew
+        ./gradlew assembleRelease
+        
+    - uses: actions/upload-artifact@v3
+      with:
+        name: gestor-iniciativas-apk
+        path: android/app/build/outputs/apk/release/app-release-unsigned.apk
