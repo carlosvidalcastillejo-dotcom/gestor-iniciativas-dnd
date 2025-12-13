@@ -1,25 +1,48 @@
-import React from 'react';
+import React, { useState } from 'react';
+import InitiativesTab from './components/InitiativesTab';
+import DataTab from './components/DataTab';
 
-function App() {
+const App = () => {
+  const [activeTab, setActiveTab] = useState('iniciativas');
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-900 to-amber-700 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-2xl p-8 max-w-md w-full">
-        <h1 className="text-3xl font-bold text-amber-900 mb-4 text-center">
-          🎲 Gestor de Iniciativas D&D
-        </h1>
-        <p className="text-gray-600 text-center mb-6">
-          La aplicación se cargó correctamente
-        </p>
-        <div className="bg-amber-100 border-l-4 border-amber-500 p-4 rounded">
-          <p className="text-sm text-amber-800">
-            <strong>✅ Todo funciona bien</strong>
-            <br />
-            Ahora debes reemplazar este archivo con tu código completo de App.jsx
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100">
+      <div className="max-w-7xl mx-auto">
+        {/* Título Global */}
+        <div className="bg-gradient-to-r from-amber-800 to-orange-900 text-white p-4 sm:p-6 shadow-lg">
+          <h1 className="text-3xl sm:text-4xl font-bold text-center">Gestor de Combate</h1>
         </div>
+
+        {/* Sistema de Pestañas */}
+        <div className="bg-gradient-to-r from-amber-700 to-orange-800 shadow-md">
+          <div className="flex justify-center">
+            <button
+              onClick={() => setActiveTab('iniciativas')}
+              className={'flex-1 max-w-xs px-6 py-3 font-bold text-lg transition-all ' +
+                (activeTab === 'iniciativas'
+                  ? 'bg-white text-amber-900 border-b-4 border-amber-900'
+                  : 'text-white hover:bg-amber-600')}
+            >
+              Iniciativas
+            </button>
+            <button
+              onClick={() => setActiveTab('datos')}
+              className={'flex-1 max-w-xs px-6 py-3 font-bold text-lg transition-all ' +
+                (activeTab === 'datos'
+                  ? 'bg-white text-amber-900 border-b-4 border-amber-900'
+                  : 'text-white hover:bg-amber-600')}
+            >
+              Datos
+            </button>
+          </div>
+        </div>
+
+        {/* Contenido de las Pestañas */}
+        {activeTab === 'iniciativas' && <InitiativesTab />}
+        {activeTab === 'datos' && <DataTab />}
       </div>
     </div>
   );
-}
+};
 
 export default App;
