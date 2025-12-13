@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import InitiativesTab from './components/InitiativesTab';
 import DataTab from './components/DataTab';
 
