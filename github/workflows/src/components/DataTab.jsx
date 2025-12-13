@@ -31,7 +31,8 @@ const DataTab = () => {
   const [currentAtaque, setCurrentAtaque] = useState({
     nombre: '',
     bonusAtaque: '',
-    danio: ''
+    dado: '',
+    constante: ''
   });
 
   // Cargar datos desde localStorage
@@ -131,7 +132,8 @@ const DataTab = () => {
       id: Date.now().toString(),
       nombre: currentAtaque.nombre,
       bonusAtaque: currentAtaque.bonusAtaque,
-      danio: currentAtaque.danio || ''
+      dado: currentAtaque.dado || '',
+      constante: currentAtaque.constante || ''
     };
 
     setFormData({
@@ -142,7 +144,8 @@ const DataTab = () => {
     setCurrentAtaque({
       nombre: '',
       bonusAtaque: '',
-      danio: ''
+      dado: '',
+      constante: ''
     });
   };
 
@@ -161,7 +164,8 @@ const DataTab = () => {
       id: Date.now().toString(),
       nombre: '',
       bonusAtaque: '',
-      danio: ''
+      dado: '',
+      constante: ''
     };
 
     setPersonajes(personajes.map(p => {
@@ -264,7 +268,7 @@ const DataTab = () => {
     }));
   };
 
-  const getFieldLabel = (campo) => {
+  const getFieldLabel = (campo, personaje) => {
     const labels = {
       'iniciativa': 'Iniciativa',
       'ca.normal': 'CA → Normal',
@@ -274,6 +278,21 @@ const DataTab = () => {
       'salvaciones.reflejos': 'Salvaciones → Reflejos',
       'salvaciones.voluntad': 'Salvaciones → Voluntad'
     };
+
+    // Check if it's an attack field
+    if (campo.startsWith('ataques.')) {
+      const parts = campo.split('.');
+      const ataqueId = parts[1];
+      const fieldType = parts[2];
+
+      if (personaje) {
+        const ataque = personaje.ataques.find(a => a.id === ataqueId);
+        const nombreAtaque = ataque?.nombre || 'Ataque';
+        const tipoField = fieldType === 'bonusAtaque' ? 'Bonus Ataque' : 'Daño';
+        return `${nombreAtaque} → ${tipoField}`;
+      }
+    }
+
     return labels[campo] || campo;
   };
 
@@ -289,6 +308,19 @@ const DataTab = () => {
     } else if (campo.startsWith('salvaciones.')) {
       const tipoSalvacion = campo.split('.')[1];
       valorBase = parseInt(personaje.salvaciones[tipoSalvacion]) || 0;
+    } else if (campo.startsWith('ataques.')) {
+      const parts = campo.split('.');
+      const ataqueId = parts[1];
+      const fieldType = parts[2];
+      const ataque = personaje.ataques.find(a => a.id === ataqueId);
+
+      if (ataque) {
+        if (fieldType === 'bonusAtaque') {
+          valorBase = parseInt(ataque.bonusAtaque) || 0;
+        } else if (fieldType === 'constante') {
+          valorBase = parseInt(ataque.constante) || 0;
+        }
+      }
     }
 
     // Sumar modificadores
@@ -356,21 +388,21 @@ const DataTab = () => {
                       {/* PG */}
                       <div className="bg-white p-3 rounded-lg shadow-sm">
                         <label className="block text-sm font-semibold text-gray-700 mb-2">Puntos de Vida</label>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
                           <input
                             type="number"
                             value={personaje.pg.actuales}
                             onChange={(e) => updatePersonajeField(personaje.id, 'pg.actuales', e.target.value)}
-                            className="flex-1 border-2 border-red-300 rounded-lg p-2 text-center font-bold text-lg"
-                            placeholder="Actuales"
+                            className="w-16 border-2 border-red-300 rounded p-1 text-center font-bold text-base"
+                            placeholder="Act"
                           />
-                          <span className="text-2xl font-bold text-gray-600">/</span>
+                          <span className="text-lg font-bold text-gray-600">/</span>
                           <input
                             type="number"
                             value={personaje.pg.totales}
                             onChange={(e) => updatePersonajeField(personaje.id, 'pg.totales', e.target.value)}
-                            className="flex-1 border-2 border-green-300 rounded-lg p-2 text-center font-bold text-lg"
-                            placeholder="Totales"
+                            className="w-16 border-2 border-green-300 rounded p-1 text-center font-bold text-base"
+                            placeholder="Tot"
                           />
                         </div>
                       </div>
@@ -501,37 +533,68 @@ const DataTab = () => {
                           </button>
                         </div>
                         <div className="space-y-2">
-                          {personaje.ataques.map(ataque => (
-                            <div key={ataque.id} className="flex items-center gap-2 p-2 bg-gray-50 rounded border border-gray-300">
-                              <input
-                                type="text"
-                                value={ataque.nombre}
-                                onChange={(e) => updateAtaque(personaje.id, ataque.id, 'nombre', e.target.value)}
-                                className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm"
-                                placeholder="Nombre"
-                              />
-                              <input
-                                type="text"
-                                value={ataque.bonusAtaque}
-                                onChange={(e) => updateAtaque(personaje.id, ataque.id, 'bonusAtaque', e.target.value)}
-                                className="w-16 border border-gray-300 rounded px-2 py-1 text-sm text-center"
-                                placeholder="+Atk"
-                              />
-                              <input
-                                type="text"
-                                value={ataque.danio || ''}
-                                onChange={(e) => updateAtaque(personaje.id, ataque.id, 'danio', e.target.value)}
-                                className="w-28 border border-gray-300 rounded px-2 py-1 text-sm"
-                                placeholder="1d10+15"
-                              />
-                              <button
-                                onClick={() => removeAtaqueFromPersonaje(personaje.id, ataque.id)}
-                                className="text-red-600 hover:text-red-800"
-                              >
-                                <X size={16} />
-                              </button>
-                            </div>
-                          ))}
+                          {personaje.ataques.map(ataque => {
+                            const bonusAtaqueCampo = `ataques.${ataque.id}.bonusAtaque`;
+                            const constanteCampo = `ataques.${ataque.id}.constante`;
+                            const tieneBonusAtaque = personaje.bonusMalus.some(bm => bm.campos.includes(bonusAtaqueCampo));
+                            const tieneConstante = personaje.bonusMalus.some(bm => bm.campos.includes(constanteCampo));
+
+                            return (
+                              <div key={ataque.id} className="p-2 bg-gray-50 rounded border border-gray-300">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <input
+                                    type="text"
+                                    value={ataque.nombre}
+                                    onChange={(e) => updateAtaque(personaje.id, ataque.id, 'nombre', e.target.value)}
+                                    className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm font-semibold"
+                                    placeholder="Nombre"
+                                  />
+                                  <button
+                                    onClick={() => removeAtaqueFromPersonaje(personaje.id, ataque.id)}
+                                    className="text-red-600 hover:text-red-800"
+                                  >
+                                    <X size={16} />
+                                  </button>
+                                </div>
+                                <div className="flex items-center gap-1 flex-wrap">
+                                  <span className="text-xs text-gray-600">+Atk:</span>
+                                  <input
+                                    type="text"
+                                    value={ataque.bonusAtaque}
+                                    onChange={(e) => updateAtaque(personaje.id, ataque.id, 'bonusAtaque', e.target.value)}
+                                    className="w-12 border border-gray-300 rounded px-1 py-1 text-xs text-center"
+                                    placeholder="3"
+                                  />
+                                  {tieneBonusAtaque && (
+                                    <span className="text-xs text-blue-600 font-semibold">
+                                      ({calcularValorConModificadores(personaje, bonusAtaqueCampo)})
+                                    </span>
+                                  )}
+                                  <span className="text-xs text-gray-600 ml-2">Daño:</span>
+                                  <input
+                                    type="text"
+                                    value={ataque.dado || ''}
+                                    onChange={(e) => updateAtaque(personaje.id, ataque.id, 'dado', e.target.value)}
+                                    className="w-16 border border-gray-300 rounded px-1 py-1 text-xs"
+                                    placeholder="1d8"
+                                  />
+                                  <span className="text-xs">+</span>
+                                  <input
+                                    type="text"
+                                    value={ataque.constante || ''}
+                                    onChange={(e) => updateAtaque(personaje.id, ataque.id, 'constante', e.target.value)}
+                                    className="w-12 border border-gray-300 rounded px-1 py-1 text-xs text-center"
+                                    placeholder="3"
+                                  />
+                                  {tieneConstante && (
+                                    <span className="text-xs text-blue-600 font-semibold">
+                                      ({calcularValorConModificadores(personaje, constanteCampo)})
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
 
@@ -557,7 +620,7 @@ const DataTab = () => {
                                   <span className="font-semibold">{bm.nombre}</span>
                                   <span className="ml-2">({bm.valor > 0 ? '+' : ''}{bm.valor})</span>
                                   <div className="text-xs opacity-75">
-                                    {bm.campos.map(c => getFieldLabel(c)).join(', ')}
+                                    {bm.campos.map(c => getFieldLabel(c, personaje)).join(', ')}
                                   </div>
                                 </div>
                                 <button
@@ -690,7 +753,9 @@ const DataTab = () => {
                     <div className="mb-3 space-y-2">
                       {formData.ataques.map(ataque => (
                         <div key={ataque.id} className="flex items-center gap-2 p-2 bg-gray-100 rounded">
-                          <span className="flex-1 text-sm">{ataque.nombre}: +{ataque.bonusAtaque} | {ataque.danio}</span>
+                          <span className="flex-1 text-sm">
+                            {ataque.nombre}: +{ataque.bonusAtaque} | {ataque.dado}{ataque.constante ? '+' + ataque.constante : ''}
+                          </span>
                           <button
                             onClick={() => removeAtaqueFromForm(ataque.id)}
                             className="text-red-600 hover:text-red-800"
@@ -711,28 +776,44 @@ const DataTab = () => {
                       className="w-full border border-gray-300 rounded p-2 text-sm"
                       placeholder="Nombre del ataque"
                     />
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={currentAtaque.bonusAtaque}
-                        onChange={(e) => setCurrentAtaque({ ...currentAtaque, bonusAtaque: e.target.value })}
-                        className="w-20 border border-gray-300 rounded p-2 text-sm"
-                        placeholder="+Atk"
-                      />
-                      <input
-                        type="text"
-                        value={currentAtaque.danio}
-                        onChange={(e) => setCurrentAtaque({ ...currentAtaque, danio: e.target.value })}
-                        className="flex-1 border border-gray-300 rounded p-2 text-sm"
-                        placeholder="Daño (ej: 1d10+15)"
-                      />
-                      <button
-                        onClick={addAtaqueToForm}
-                        className="bg-green-500 hover:bg-green-600 text-white rounded px-4 text-sm font-bold"
-                      >
-                        +
-                      </button>
+                    <div className="grid grid-cols-4 gap-2">
+                      <div>
+                        <label className="text-xs text-gray-600">+Atk</label>
+                        <input
+                          type="text"
+                          value={currentAtaque.bonusAtaque}
+                          onChange={(e) => setCurrentAtaque({ ...currentAtaque, bonusAtaque: e.target.value })}
+                          className="w-full border border-gray-300 rounded p-2 text-sm"
+                          placeholder="3"
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="text-xs text-gray-600">Dado</label>
+                        <input
+                          type="text"
+                          value={currentAtaque.dado}
+                          onChange={(e) => setCurrentAtaque({ ...currentAtaque, dado: e.target.value })}
+                          className="w-full border border-gray-300 rounded p-2 text-sm"
+                          placeholder="1d8"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-600">+Const</label>
+                        <input
+                          type="text"
+                          value={currentAtaque.constante}
+                          onChange={(e) => setCurrentAtaque({ ...currentAtaque, constante: e.target.value })}
+                          className="w-full border border-gray-300 rounded p-2 text-sm"
+                          placeholder="3"
+                        />
+                      </div>
                     </div>
+                    <button
+                      onClick={addAtaqueToForm}
+                      className="w-full bg-green-500 hover:bg-green-600 text-white rounded p-2 text-sm font-bold"
+                    >
+                      + Añadir Ataque
+                    </button>
                   </div>
                 </div>
               </div>
@@ -813,7 +894,8 @@ const DataTab = () => {
                 {/* Campos afectados */}
                 <div>
                   <label className="block text-sm font-semibold mb-2">Campos Afectados</label>
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {/* Campos estáticos */}
                     {[
                       { label: 'Iniciativa', value: 'iniciativa' },
                       { label: 'CA Normal', value: 'ca.normal' },
@@ -832,6 +914,31 @@ const DataTab = () => {
                         />
                         <span className="text-sm">{campo.label}</span>
                       </label>
+                    ))}
+
+                    {/* Campos dinámicos de ataques */}
+                    {bonusMalusForm.personajeId && personajes.find(p => p.id === bonusMalusForm.personajeId)?.ataques.map(ataque => (
+                      <div key={ataque.id} className="border-t pt-2 mt-2">
+                        <div className="text-xs font-semibold text-gray-600 mb-1">{ataque.nombre || 'Ataque sin nombre'}</div>
+                        <label className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={bonusMalusForm.campos.includes(`ataques.${ataque.id}.bonusAtaque`)}
+                            onChange={() => toggleCampo(`ataques.${ataque.id}.bonusAtaque`)}
+                            className="w-4 h-4"
+                          />
+                          <span className="text-sm">Bonus Ataque</span>
+                        </label>
+                        <label className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={bonusMalusForm.campos.includes(`ataques.${ataque.id}.constante`)}
+                            onChange={() => toggleCampo(`ataques.${ataque.id}.constante`)}
+                            className="w-4 h-4"
+                          />
+                          <span className="text-sm">Daño (Constante)</span>
+                        </label>
+                      </div>
                     ))}
                   </div>
                 </div>
