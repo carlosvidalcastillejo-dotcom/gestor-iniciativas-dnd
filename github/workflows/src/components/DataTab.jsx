@@ -8,6 +8,7 @@ const DataTab = () => {
   const [showBonusMalusModal, setShowBonusMalusModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState(null);
+  const [showClearDataModal, setShowClearDataModal] = useState(false);
 
   const [formData, setFormData] = useState({
     id: null,
@@ -322,6 +323,14 @@ const DataTab = () => {
     }));
   };
 
+  const limpiarTodosDatos = () => {
+    localStorage.removeItem('characterData');
+    setPersonajes([]);
+    setShowClearDataModal(false);
+    alert('Todos los datos han sido eliminados. La página se recargará.');
+    window.location.reload();
+  };
+
   const getFieldLabel = (campo, personaje) => {
     const labels = {
       'iniciativa': 'Iniciativa',
@@ -391,7 +400,7 @@ const DataTab = () => {
         {/* Header */}
         <div className="bg-gradient-to-r from-amber-800 to-orange-900 text-white rounded-t-lg p-4 sm:p-6 shadow-lg mb-4">
           <h1 className="text-2xl sm:text-3xl font-bold text-center mb-4">Datos de Personajes</h1>
-          <div className="flex justify-center">
+          <div className="flex justify-center gap-3 flex-wrap">
             <button
               onClick={() => setShowAddModal(true)}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 font-semibold"
@@ -399,6 +408,15 @@ const DataTab = () => {
               <Plus size={20} />
               Añadir Personaje/Monstruo
             </button>
+            {personajes.length > 0 && (
+              <button
+                onClick={() => setShowClearDataModal(true)}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center gap-2 font-semibold text-sm"
+              >
+                <Trash2 size={18} />
+                Limpiar Datos
+              </button>
+            )}
           </div>
         </div>
 
@@ -1034,6 +1052,31 @@ const DataTab = () => {
                     setShowDeleteModal(false);
                     setDeleteTargetId(null);
                   }}
+                  className="flex-1 px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg font-semibold"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal Limpiar Todos los Datos */}
+        {showClearDataModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full">
+              <h2 className="text-2xl font-bold mb-4 text-red-600">⚠️ Limpiar Todos los Datos</h2>
+              <p className="mb-4 font-semibold">¿Estás seguro que quieres eliminar TODOS los personajes?</p>
+              <p className="mb-6 text-sm text-gray-600">Esta acción no se puede deshacer. Se perderán todos los datos guardados.</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={limpiarTodosDatos}
+                  className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold"
+                >
+                  Sí, eliminar todo
+                </button>
+                <button
+                  onClick={() => setShowClearDataModal(false)}
                   className="flex-1 px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg font-semibold"
                 >
                   Cancelar
