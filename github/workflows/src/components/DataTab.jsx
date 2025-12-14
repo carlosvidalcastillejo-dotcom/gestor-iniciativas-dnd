@@ -264,6 +264,8 @@ const DataTab = () => {
   };
 
   const openBonusMalusModal = (personajeId) => {
+    const personaje = personajes.find(p => p.id === personajeId);
+    console.log('Abriendo modal para personaje:', personaje?.nombre, 'Ataques:', personaje?.ataques.length);
     setBonusMalusForm({
       personajeId,
       tipo: 'bonus',
@@ -988,7 +990,7 @@ const DataTab = () => {
                       </label>
                     ))}
 
-                    {/* Campos dinámicos de ataques */}
+                    {/* Campos dinámicos de ataques - Bonus/Malus para cada ataque */}
                     {bonusMalusForm.personajeId && personajes.find(p => p.id === bonusMalusForm.personajeId)?.ataques.map(ataque => (
                       <div key={ataque.id} className="border-t pt-2 mt-2">
                         <div className="text-xs font-semibold text-gray-600 mb-1">{ataque.nombre || 'Ataque sin nombre'}</div>
