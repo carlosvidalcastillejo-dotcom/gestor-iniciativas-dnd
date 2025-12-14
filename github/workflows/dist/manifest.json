@@ -1,0 +1,13 @@
+{
+  "name": "Gestor de Iniciativas D&D",
+  "short_name": "Iniciativas",
+  "description": "Gestor de turnos de combate para Dungeons & Dragons",
+  "start_url": "/gestor-iniciativas-dnd/",
+  "display": "standalone",
+  "background_color": "#92400e",
+  "theme_color": "#92400e",
+  "orientation": "portrait",
+  "icons": [],
+  "categories": ["games", "utilities"],
+  "lang": "es-ES"
+}
