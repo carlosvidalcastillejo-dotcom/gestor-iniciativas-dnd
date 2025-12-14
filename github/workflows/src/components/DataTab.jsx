@@ -35,13 +35,67 @@ const DataTab = () => {
     constante: ''
   });
 
+  // Función para migrar datos antiguos al nuevo formato
+  const migrarDatosAntiguos = (personajes) => {
+    return personajes.map(personaje => {
+      // Migrar ataques del formato antiguo al nuevo
+      const ataquesMigrados = personaje.ataques.map(ataque => {
+        // Si ya tiene el formato nuevo, devolverlo tal cual
+        if (ataque.dado !== undefined && ataque.constante !== undefined) {
+          return ataque;
+        }
+
+        // Si tiene el formato antiguo con 'danio', convertirlo
+        if (ataque.danio !== undefined) {
+          return {
+            ...ataque,
+            dado: '',
+            constante: ataque.danio || '',
+            danio: undefined // Eliminar el campo antiguo
+          };
+        }
+
+        // Si tiene el formato muy antiguo con numDados, carasDado, constante
+        if (ataque.numDados !== undefined || ataque.carasDado !== undefined) {
+          const dado = (ataque.numDados && ataque.carasDado)
+            ? `${ataque.numDados}d${ataque.carasDado}`
+            : '';
+          return {
+            id: ataque.id,
+            nombre: ataque.nombre || '',
+            bonusAtaque: ataque.bonusAtaque || '',
+            dado: dado,
+            constante: ataque.constante || ''
+          };
+        }
+
+        // Si no tiene ninguno de estos campos, usar el formato nuevo vacío
+        return {
+          ...ataque,
+          dado: ataque.dado || '',
+          constante: ataque.constante || ''
+        };
+      });
+
+      return {
+        ...personaje,
+        ataques: ataquesMigrados
+      };
+    });
+  };
+
   // Cargar datos desde localStorage
   useEffect(() => {
     const loadData = () => {
       try {
         const savedData = localStorage.getItem('characterData');
         if (savedData) {
-          setPersonajes(JSON.parse(savedData));
+          const personajesCargados = JSON.parse(savedData);
+          const personajesMigrados = migrarDatosAntiguos(personajesCargados);
+          setPersonajes(personajesMigrados);
+
+          // Guardar los datos migrados inmediatamente
+          localStorage.setItem('characterData', JSON.stringify(personajesMigrados));
         }
       } catch (error) {
         console.log('No hay datos de personajes guardados');
