@@ -991,9 +991,13 @@ const DataTab = () => {
                     ))}
 
                     {/* Campos dinámicos de ataques - Bonus/Malus para cada ataque */}
-                    {bonusMalusForm.personajeId && personajes.find(p => p.id === bonusMalusForm.personajeId)?.ataques.map(ataque => (
-                      <div key={ataque.id} className="border-t pt-2 mt-2">
-                        <div className="text-xs font-semibold text-gray-600 mb-1">{ataque.nombre || 'Ataque sin nombre'}</div>
+                    {(() => {
+                      const personaje = personajes.find(p => p.id === bonusMalusForm.personajeId);
+                      console.log('Personaje en modal:', personaje);
+                      console.log('Ataques del personaje:', personaje?.ataques);
+                      return bonusMalusForm.personajeId && personaje?.ataques?.map(ataque => (
+                        <div key={ataque.id} className="border-t pt-2 mt-2">
+                          <div className="text-xs font-semibold text-gray-600 mb-1">{ataque.nombre || 'Ataque sin nombre'}</div>
                         <label className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded cursor-pointer">
                           <input
                             type="checkbox"
@@ -1013,7 +1017,8 @@ const DataTab = () => {
                           <span className="text-sm">Daño (Constante)</span>
                         </label>
                       </div>
-                    ))}
+                      ));
+                    })()}
                   </div>
                 </div>
               </div>
